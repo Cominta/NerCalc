@@ -62,15 +62,15 @@ void MathParser::calculateStack(std::stack<double>& numbers, std::stack<LexAnaly
             break;
         }
 
-        if (numbers.size() % 2 != 0)
-        {
-            throw 0;
-        }
-
         if (op.top() == LexAnalyser::TokenType::LB)
         {
             op.pop();
             continue;
+        }
+
+        if (numbers.size() % op.size() != 0 || numbers.size() <= 1)
+        {
+            throw 0;
         }
 
         double num1 = numbers.top();
@@ -145,7 +145,7 @@ double MathParser::calculate(std::vector<LexAnalyser::Token*> tokenArray)
 
     this->calculateStack(numbers, op);
 
-    if (numbers.size() > 0)
+    if (numbers.size() == 1)
     {
         return numbers.top();
     }
