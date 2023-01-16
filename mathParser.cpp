@@ -158,6 +158,21 @@ double MathParser::calculate(std::vector<LexAnalyser::Token*> tokenArray)
 
 double MathParser::parseString(std::string inputString, int index)
 {
+    int countEqual = 0;
+
+    for (int i = 0; i < inputString.size(); i++)
+    {
+        if (inputString[i] == '=')
+        {
+            countEqual++;
+        }
+    }
+
+    if (countEqual > 1)
+    {
+        throw 0;
+    }
+
     this->inputString = inputString + "$";
     this->currentIndex = index;
 

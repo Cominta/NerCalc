@@ -51,9 +51,9 @@ std::vector<LexAnalyser::Token*> LexAnalyser::analyseString(std::string inputStr
 
         else 
         {
-            if ((output.back()->tType == LexAnalyser::TokenType::MULTIPLY || output.back()->tType == LexAnalyser::TokenType::DIVIDE ||
+            if (output.empty() || ((output.back()->tType == LexAnalyser::TokenType::MULTIPLY || output.back()->tType == LexAnalyser::TokenType::DIVIDE ||
                 output.back()->tType == LexAnalyser::TokenType::PLUS || output.back()->tType == LexAnalyser::TokenType::SUB)
-                && this->mapTokens[inputString[i]] != LexAnalyser::TokenType::LB)
+                && this->mapTokens[inputString[i]] != LexAnalyser::TokenType::LB))
             {
                 delete currentToken;
                 throw 0;

@@ -18,7 +18,7 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::enter(bool enter)
+void MainWindow::enter(bool enter, bool wrongEnter)
 {
     int currentRow = ui->entry->textCursor().blockNumber() - (enter ? 1 : 0);
     QStringList Qstr = ui->entry->toPlainText().split("\n");
@@ -26,7 +26,17 @@ void MainWindow::enter(bool enter)
 
     if (isalpha(Qstr[currentRow].toStdString()[0]) && Qstr[currentRow].replace(" ", "").indexOf("=") == 1)
     {
-        if (Qstr[currentRow].size() > 2)
+        if (enter && Qstr[currentRow].size() == 2)
+        {
+            QString stringOut = Qstr[currentRow];
+
+            stringOut += QString::number(this->mathParser->getValueVariable(Qstr[currentRow][0].toLatin1()));
+            Qstr[currentRow] = stringOut;
+
+            this->refillEntry(Qstr, currentRow, ui->entry->textCursor().columnNumber());
+        }
+
+        else if (Qstr[currentRow].size() > 2)
         {
             this->var(Qstr[currentRow]);
         }
@@ -39,26 +49,40 @@ void MainWindow::enter(bool enter)
 
     else
     {
-        if (Qstr[currentRow].contains("="))
+        QString toCalc = Qstr[currentRow];
+
+        if (wrongEnter)
         {
-            Qstr[currentRow] = Qstr[currentRow].split("=")[0];
-            Qstr[currentRow].replace("=", "");
+            toCalc += Qstr[currentRow + 1];
+            Qstr[currentRow + 1] = "";
         }
 
-        Qstr[currentRow].replace(" ", "");
+        if (toCalc.contains('='))
+        {
+            toCalc = toCalc.split("=")[0];
+            toCalc.replace("=", "");
+        }
 
-        result = this->equal(Qstr[currentRow]);
+        toCalc.replace(" ", "");
+
+        result = this->equal(toCalc);
         Qstr[currentRow] = result;
-        refillEntry(Qstr, currentRow);
+
+        if (enter && currentRow < Qstr.size() - 1)
+        {
+//            currentRow--;
+        }
+
+        this->refillEntry(Qstr, (enter ? currentRow + 1 : currentRow), ui->entry->textCursor().columnNumber() + result.size());
     }
 }
 
 QString MainWindow::equal(QString string)
 {
-    if (string.contains('='))
-    {
-        string = string.split('=')[0];
-    }
+//    if (string.contains('='))
+//    {
+//        string = string.split('=')[0];
+//    }
 
     // Qstr[currentRow].toStdString()
     double result;
@@ -99,10 +123,10 @@ void MainWindow::editRow()
         Qstr[currentRow] = Qstr[lastRow].split("=")[1] + Qstr[currentRow];
     }
 
-    this->refillEntry(Qstr, currentRow);
+    this->refillEntry(Qstr, currentRow, ui->entry->textCursor().columnNumber() + Qstr[lastRow].split("=")[1].size());
 }
 
-void MainWindow::refillEntry(QStringList Qstr, int currentRow)
+void MainWindow::refillEntry(QStringList Qstr, int currentRow, int column)
 {
     ui->entry->clear();
 
@@ -114,7 +138,7 @@ void MainWindow::refillEntry(QStringList Qstr, int currentRow)
     QTextCursor tmpCursor = ui->entry->textCursor();
     tmpCursor.movePosition(QTextCursor::Start);
     tmpCursor.movePosition(QTextCursor::Down, QTextCursor::MoveMode::MoveAnchor, currentRow);
-    tmpCursor.movePosition(QTextCursor::Right, QTextCursor::MoveMode::MoveAnchor, QTextCursor::MoveOperation::End);
+    tmpCursor.movePosition(QTextCursor::Right, QTextCursor::MoveMode::MoveAnchor, column);
     ui->entry->setTextCursor(tmpCursor);
 
 //    ui->entry->insertPlainText(Qstr[currentRow]);
@@ -130,6 +154,36 @@ void MainWindow::var(QString string)
     this->mathParser->addVariable(name, value);
 }
 
+void MainWindow::deleteEqual(bool equal, int oldSizeSet)
+{
+    static int oldSize = 0;
+    static int oldRow = 0;
+
+    if (oldSizeSet != -1)
+    {
+        oldSize = oldSizeSet;
+        return;
+    }
+
+    int currentRow = ui->entry->textCursor().blockNumber();
+    QStringList Qstr =  ui->entry->toPlainText().split("\n");
+    int currentSize = Qstr[currentRow].size();
+
+    if (currentRow != oldRow)
+    {
+        oldSize = currentSize;
+        oldRow = currentRow;
+    }
+
+    if (Qstr[currentRow].contains("=") && currentSize != oldSize && !equal)
+    {
+        Qstr[currentRow] = Qstr[currentRow].split("=")[0];
+        this->refillEntry(Qstr, currentRow, ui->entry->textCursor().columnNumber());
+
+        oldSize = currentSize;
+        oldRow = currentRow;
+    }
+}
 
 bool MainWindow::eventFilter(QObject* obj, QEvent* event)
 {
@@ -138,26 +192,33 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event)
     if (event->type() == QKeyEvent::KeyRelease)
     {
         QKeyEvent* key = static_cast<QKeyEvent*>(event);
+        bool equal = false;
 
         if(key->key() == Qt::Key_Return)
         {
             if (count == -1)
             {
-                this->enter(true);
-            }
+                if (ui->entry->textCursor().columnNumber() != ui->entry->toPlainText().split("\n")[ui->entry->textCursor().blockNumber()].size())
+                {
+                    this->enter(true, true);
+                }
 
-            count++;
+                else
+                {
+                    this->enter(true);
+                }
+
+                equal = true;
+            }
         }
 
-        else if ((key->key() == Qt::Key_Plus || key->key() == Qt::Key_Minus || key->key() == Qt::Key_Backslash || key->key() == Qt::Key_Asterisk) &&
+        else if ((key->key() == Qt::Key_Plus || key->key() == Qt::Key_Minus || key->key() == Qt::Key_Slash || key->key() == Qt::Key_Asterisk) &&
                  ui->entry->toPlainText().split("\n")[ui->entry->textCursor().blockNumber()].size() == 1 && ui->entry->textCursor().blockNumber() != 0)
         {
             if (count == -1)
             {
                 this->editRow();
             }
-
-            count++;
         }
 
         else if (key->key() == Qt::Key_Equal)
@@ -165,15 +226,25 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event)
             if (count == -1)
             {
                 this->enter(false);
+                equal = true;
             }
-
-            count++;
         }
+
+        if (count == -1 /*&& key->key() == Qt::Key_Backspace*/ &&
+            !isalpha(ui->entry->toPlainText().split("\n")[ui->entry->textCursor().blockNumber()].toStdString()[0]) &&
+            !(ui->entry->toPlainText().split("\n")[ui->entry->textCursor().blockNumber()].toStdString()[1] == '='))
+        {
+            this->deleteEqual(equal);
+        }
+
+        count++;
 
         if (count == 3)
         {
             count = -1;
         }
+
+        this->deleteEqual(false, ui->entry->toPlainText().split("\n")[ui->entry->textCursor().blockNumber()].size());
     }
 
     return QMainWindow::eventFilter(obj, event);

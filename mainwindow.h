@@ -3,8 +3,8 @@
 
 #include <QMainWindow>
 #include "mathParser.h"
-#include <QKeyEvent>
 #include <QTextBlock>
+#include <QKeyEvent>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -20,10 +20,11 @@ class MainWindow : public QMainWindow
 
     private slots:
         void editRow();
-        void refillEntry(QStringList Qstr, int currentRow);
-        void enter(bool enter);
+        void refillEntry(QStringList Qstr, int currentRow, int column);
+        void enter(bool enter, bool wrongEnter = false);
         QString equal(QString string);
         void var(QString string);
+        void deleteEqual(bool equal, int oldSizeSet = -1);
 
 public:
         MainWindow(QWidget *parent = nullptr);

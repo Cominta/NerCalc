@@ -30,6 +30,7 @@ class MathParser
 
         double parseString(std::string inputString, int index = 0);
         void addVariable(char name, std::string value);
+        double getValueVariable(char name) {return this->lexanalyser->variables[name];};
 };
 
 #endif
