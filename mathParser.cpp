@@ -68,7 +68,7 @@ void MathParser::calculateStack(std::stack<double>& numbers, std::stack<LexAnaly
             continue;
         }
 
-        if (numbers.size() % op.size() != 0 || numbers.size() <= 1)
+        if (numbers.size() <= 1)
         {
             throw 0;
         }

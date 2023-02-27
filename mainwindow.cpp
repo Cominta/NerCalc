@@ -10,12 +10,19 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     qApp->installEventFilter(this);
 
+    this->fontSize = ui->entry->font().pointSize();
     this->mathParser = new MathParser();
+
+    QMenuBar* menubar = new QMenuBar(nullptr);
+    menubar->addMenu("Settings");
+
+//    ui->entry->setTextInteractionFlags(Qt::TextInteractionFlag::TextEditorInteraction);
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+    delete this->mathParser;
 }
 
 void MainWindow::enter(bool enter, bool wrongEnter)
@@ -23,6 +30,17 @@ void MainWindow::enter(bool enter, bool wrongEnter)
     int currentRow = ui->entry->textCursor().blockNumber() - (enter ? 1 : 0);
     QStringList Qstr = ui->entry->toPlainText().split("\n");
     QString result;
+
+    if (Qstr.size() == 0 || Qstr[0].size() == 0 || currentRow < 0)
+    {
+        return;
+    }
+
+    if ((Qstr[currentRow].size() != 0 && Qstr[currentRow][0] == '#'))
+    {
+        this->refillEntry(Qstr, (enter ? currentRow + 1 : currentRow), ui->entry->textCursor().columnNumber() + result.size(), true);
+        return;
+    }
 
     if (isalpha(Qstr[currentRow].toStdString()[0]) && Qstr[currentRow].replace(" ", "").indexOf("=") == 1)
     {
@@ -73,7 +91,7 @@ void MainWindow::enter(bool enter, bool wrongEnter)
 //            currentRow--;
         }
 
-        this->refillEntry(Qstr, (enter ? currentRow + 1 : currentRow), ui->entry->textCursor().columnNumber() + result.size());
+        this->refillEntry(Qstr, (enter ? currentRow + 1 : currentRow), ui->entry->textCursor().columnNumber() + result.size(), true);
     }
 }
 
@@ -91,6 +109,18 @@ QString MainWindow::equal(QString string)
     try
     {
         result = this->mathParser->parseString(string.toStdString());
+
+        if (std::isinf(result))
+        {
+            MessageBox(nullptr, TEXT("Number is inf"), TEXT("ERROR"), MB_OK);
+            notError = false;
+        }
+
+        else if (std::isnan(result))
+        {
+            MessageBox(nullptr, TEXT("Not a number"), TEXT("ERROR"), MB_OK);
+            notError = false;
+        }
     }
 
     catch (int)
@@ -100,7 +130,20 @@ QString MainWindow::equal(QString string)
 
     if (notError)
     {
-        QString equalStr("=" + QString::number(result));
+//        int countNumbers = 0;
+//        int num = result;
+
+//        while (num != 0)
+//        {
+//            countNumbers++;
+//            num -= num % 10;
+//            num /= 10;
+//        }
+
+        QString equalStr;
+        equalStr.setNum(std::round(result * 100) / 100/*, 'g', this->maxNumbers*/);
+        equalStr.insert(0, '=');
+
         string += equalStr;
     }
 
@@ -112,6 +155,11 @@ void MainWindow::editRow()
     int currentRow = ui->entry->textCursor().blockNumber();
     int lastRow = ui->entry->textCursor().blockNumber() - 1;
     QStringList Qstr =  ui->entry->toPlainText().split("\n");
+
+    if (Qstr[lastRow].size() == 0 || Qstr[lastRow][0] == '#')
+    {
+        return;
+    }
 
     if (isalpha(Qstr[lastRow].toStdString()[0]) && Qstr[lastRow].replace(" ", "").indexOf("=") == 1)
     {
@@ -126,22 +174,38 @@ void MainWindow::editRow()
     this->refillEntry(Qstr, currentRow, ui->entry->textCursor().columnNumber() + Qstr[lastRow].split("=")[1].size());
 }
 
-void MainWindow::refillEntry(QStringList Qstr, int currentRow, int column)
+void MainWindow::setFontSize(QTextCursor& tmpCursor)
+{
+    ui->entry->selectAll();
+    ui->entry->setFontPointSize(this->fontSize);
+}
+
+void MainWindow::refillEntry(QStringList Qstr, int currentRow, int column, bool enter)
 {
     ui->entry->clear();
 
     for (int i = 0; i < Qstr.length(); i++)
     {
-        ui->entry->append(Qstr[i]);
+        QTextCharFormat format;
+
+        if (Qstr[i].size() != 0 && Qstr[i][0] == '#')
+        {
+            ui->entry->append(QString("<font color=green>%1<\\font>").arg(Qstr[i]));
+        }
+
+        else
+        {
+            ui->entry->append(QString("<font color=black margin=10px>%1<\\font>").arg(Qstr[i]));
+        }
     }
 
     QTextCursor tmpCursor = ui->entry->textCursor();
-    tmpCursor.movePosition(QTextCursor::Start);
-    tmpCursor.movePosition(QTextCursor::Down, QTextCursor::MoveMode::MoveAnchor, currentRow);
-    tmpCursor.movePosition(QTextCursor::Right, QTextCursor::MoveMode::MoveAnchor, column);
+    tmpCursor.movePosition(QTextCursor::Start, QTextCursor::MoveAnchor);
+    tmpCursor.movePosition(QTextCursor::Down, QTextCursor::MoveAnchor, currentRow);
+    tmpCursor.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor, column);
+    this->setFontSize(tmpCursor);
+    QFont font = ui->entry->font();
     ui->entry->setTextCursor(tmpCursor);
-
-//    ui->entry->insertPlainText(Qstr[currentRow]);
 }
 
 void MainWindow::var(QString string)
@@ -175,7 +239,7 @@ void MainWindow::deleteEqual(bool equal, int oldSizeSet)
         oldRow = currentRow;
     }
 
-    if (Qstr[currentRow].contains("=") && currentSize != oldSize && !equal)
+    if (Qstr[currentRow].size() != 0 && Qstr[currentRow][0] != '#' && Qstr[currentRow].contains("=") && currentSize != oldSize && !equal)
     {
         Qstr[currentRow] = Qstr[currentRow].split("=")[0];
         this->refillEntry(Qstr, currentRow, ui->entry->textCursor().columnNumber());
@@ -194,58 +258,81 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event)
         QKeyEvent* key = static_cast<QKeyEvent*>(event);
         bool equal = false;
 
-        if(key->key() == Qt::Key_Return)
+        try
         {
-            if (count == -1)
+            if(key->key() == Qt::Key_Return || key->key() == Qt::Key_Enter)
             {
-                if (ui->entry->textCursor().columnNumber() != ui->entry->toPlainText().split("\n")[ui->entry->textCursor().blockNumber()].size())
+                if (count == -1)
                 {
-                    this->enter(true, true);
-                }
+                    if (ui->entry->textCursor().columnNumber() != ui->entry->toPlainText().split("\n")[ui->entry->textCursor().blockNumber()].size())
+                    {
+                        this->enter(true, true);
+                    }
 
-                else
+                    else
+                    {
+                        this->enter(true);
+                    }
+
+                    equal = true;
+                }
+            }
+
+            else if ((key->key() == Qt::Key_Plus || key->key() == Qt::Key_Minus || key->key() == Qt::Key_Slash || key->key() == Qt::Key_Asterisk) &&
+                     ui->entry->toPlainText().split("\n")[ui->entry->textCursor().blockNumber()].size() == 1 && ui->entry->textCursor().blockNumber() != 0)
+            {
+                if (count == -1)
                 {
-                    this->enter(true);
+                    this->editRow();
                 }
-
-                equal = true;
             }
-        }
 
-        else if ((key->key() == Qt::Key_Plus || key->key() == Qt::Key_Minus || key->key() == Qt::Key_Slash || key->key() == Qt::Key_Asterisk) &&
-                 ui->entry->toPlainText().split("\n")[ui->entry->textCursor().blockNumber()].size() == 1 && ui->entry->textCursor().blockNumber() != 0)
-        {
-            if (count == -1)
+            else if (key->key() == Qt::Key_Equal)
             {
-                this->editRow();
+                if (count == -1)
+                {
+                    this->enter(false);
+                    equal = true;
+                }
             }
-        }
 
-        else if (key->key() == Qt::Key_Equal)
-        {
-            if (count == -1)
+            if (count == -1 /*&& key->key() == Qt::Key_Backspace*/ &&
+                !isalpha(ui->entry->toPlainText().split("\n")[ui->entry->textCursor().blockNumber()].toStdString()[0]) &&
+                !(ui->entry->toPlainText().split("\n")[ui->entry->textCursor().blockNumber()].toStdString()[1] == '='))
             {
-                this->enter(false);
-                equal = true;
+                this->deleteEqual(equal);
             }
+
+            count++;
+
+            if (count == 3)
+            {
+                count = -1;
+            }
+
+            this->deleteEqual(false, ui->entry->toPlainText().split("\n")[ui->entry->textCursor().blockNumber()].size());
         }
 
-        if (count == -1 /*&& key->key() == Qt::Key_Backspace*/ &&
-            !isalpha(ui->entry->toPlainText().split("\n")[ui->entry->textCursor().blockNumber()].toStdString()[0]) &&
-            !(ui->entry->toPlainText().split("\n")[ui->entry->textCursor().blockNumber()].toStdString()[1] == '='))
+        catch (const std::exception& ex)
         {
-            this->deleteEqual(equal);
+            MessageBox(nullptr, TEXT("ERROR"), TEXT("ERROR"), MB_OK);
         }
-
-        count++;
-
-        if (count == 3)
-        {
-            count = -1;
-        }
-
-        this->deleteEqual(false, ui->entry->toPlainText().split("\n")[ui->entry->textCursor().blockNumber()].size());
     }
 
     return QMainWindow::eventFilter(obj, event);
+}
+
+void MainWindow::on_actionFont_size_triggered()
+{
+    this->fontSize = QInputDialog::getInt(this, "Font size", "Enter font size:", this->fontSize, 0, 100);
+    QTextCursor tmpCursor = ui->entry->textCursor();
+    this->setFontSize(tmpCursor);
+    ui->entry->setTextCursor(tmpCursor);
+}
+
+
+void MainWindow::on_actionInterval_triggered()
+{
+    int spacing = QInputDialog::getInt(this, "Letter spacing", "Enter letter spacing:", 0, 0, 10);
+    ui->entry->setStyleSheet(("QTextEdit {letter-spacing: " + std::to_string(spacing) + "px;}").data());
 }

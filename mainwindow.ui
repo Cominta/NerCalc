@@ -34,6 +34,35 @@
     </property>
    </widget>
   </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>500</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuSettings">
+    <property name="title">
+     <string>Settings</string>
+    </property>
+    <addaction name="separator"/>
+    <addaction name="actionFont_size"/>
+    <addaction name="actionInterval"/>
+   </widget>
+   <addaction name="menuSettings"/>
+  </widget>
+  <action name="actionFont_size">
+   <property name="text">
+    <string>Font size</string>
+   </property>
+  </action>
+  <action name="actionInterval">
+   <property name="text">
+    <string>Letter spacing</string>
+   </property>
+  </action>
  </widget>
  <resources/>
  <connections/>

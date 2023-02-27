@@ -5,6 +5,7 @@
 #include <vector>
 #include <map>
 #include <iostream>
+#include <cmath>
 
 class LexAnalyser
 {
@@ -33,6 +34,7 @@ class LexAnalyser
             {')', TokenType::RB}
         };
 
+        bool checkValidBrack(std::string string);
 
     public:
         struct Token
