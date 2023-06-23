@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>500</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <widget class="QTextEdit" name="entry">
+    <property name="geometry">
+     <rect>
+      <x>0</x>
+      <y>0</y>
+      <width>500</width>
+      <height>601</height>
+     </rect>
+    </property>
+    <property name="acceptDrops">
+     <bool>true</bool>
+    </property>
+    <property name="lineWrapMode">
+     <enum>QTextEdit::NoWrap</enum>
+    </property>
+    <property name="acceptRichText">
+     <bool>true</bool>
+    </property>
+   </widget>
+  </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>500</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuSettings">
+    <property name="title">
+     <string>Settings</string>
+    </property>
+    <addaction name="separator"/>
+    <addaction name="actionFont_size"/>
+    <addaction name="actionInterval"/>
+   </widget>
+   <widget class="QMenu" name="menuExpressions_config">
+    <property name="title">
+     <string>Expressions config</string>
+    </property>
+    <widget class="QMenu" name="menuSpacing_after">
+     <property name="title">
+      <string>Spacing after '='</string>
+     </property>
+     <addaction name="separator"/>
+     <addaction name="actionTrue"/>
+     <addaction name="actionFalse"/>
+    </widget>
+    <addaction name="menuSpacing_after"/>
+   </widget>
+   <addaction name="menuSettings"/>
+   <addaction name="menuExpressions_config"/>
+  </widget>
+  <action name="actionFont_size">
+   <property name="text">
+    <string>Font size</string>
+   </property>
+  </action>
+  <action name="actionInterval">
+   <property name="text">
+    <string>Letter spacing</string>
+   </property>
+  </action>
+  <action name="actionTrue">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset theme="call-start"/>
+   </property>
+   <property name="text">
+    <string>True</string>
+   </property>
+  </action>
+  <action name="actionFalse">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>False</string>
+   </property>
+  </action>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
