@@ -1,5 +1,5 @@
 #include "mainwindow.h"
-#include "./ui_mainwindow.h"
+#include <ui_mainwindow.h>
 #include <iostream>
 #include <windows.h>
 
@@ -388,4 +388,3 @@ void MainWindow::on_actionFalse_triggered()
         this->ui->actionTrue->setChecked(false);
     }
 }
-
