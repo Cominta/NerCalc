@@ -5,6 +5,7 @@
 #include <map>
 #include <cmath>
 #include <exception>
+#include <QDebug>
 
 /*
 *	E -> T - T | T + T | T
@@ -28,6 +29,12 @@ class WrongNums : public WrongExpr
 {
 public:
     const char* what() const noexcept override { return "Wrong numbers"; }
+};
+
+class EmptyLine : public WrongExpr
+{
+public:
+    const char* what() const noexcept override { return "Empty Line"; }
 };
 
 class Parser

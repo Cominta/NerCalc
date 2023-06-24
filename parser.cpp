@@ -272,9 +272,12 @@ double Parser::parse(std::string str)
 
         double result = this->tree->eval();
         delete this->tree;
+        this->tree = nullptr;
 
         return result;
     }
+
+    throw EmptyLine();
 }
 
 Parser::~Parser()

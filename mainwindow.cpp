@@ -15,11 +15,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     this->config = new ExprConfig();
     this->config->spacingAfterEqual = true;
-
-//    QMenuBar* menubar = new QMenuBar(nullptr);
-//    menubar->addMenu("Settings");
-
-//    ui->entry->setTextInteractionFlags(Qt::TextInteractionFlag::TextEditorInteraction);
 }
 
 MainWindow::~MainWindow()
@@ -76,7 +71,8 @@ void MainWindow::enter(bool enter, bool wrongEnter)
         if (wrongEnter)
         {
             toCalc += Qstr[currentRow + 1];
-            Qstr[currentRow + 1] = "";
+            Qstr.erase(Qstr.begin() + currentRow);
+//            Qstr[currentRow + 1] = "";
         }
 
         if (toCalc.contains('='))
@@ -113,6 +109,7 @@ QString MainWindow::equal(QString string)
     try
     {
         result = this->mathParser->parse(string.toStdString());
+        qDebug() << result;
 
         if (std::isinf(result))
         {
@@ -125,6 +122,11 @@ QString MainWindow::equal(QString string)
             MessageBox(nullptr, TEXT("Not a number"), TEXT("ERROR"), MB_OK);
             notError = false;
         }
+    }
+
+    catch (EmptyLine& empty)
+    {
+        return "";
     }
 
     catch (std::exception& exp)
@@ -172,6 +174,7 @@ void MainWindow::editRow()
     int currentRow = ui->entry->textCursor().blockNumber();
     int lastRow = ui->entry->textCursor().blockNumber() - 1;
     QStringList Qstr =  ui->entry->toPlainText().split("\n");
+    bool var = false;
 
     if (Qstr[lastRow].size() == 0 || Qstr[lastRow][0] == '#')
     {
@@ -180,6 +183,7 @@ void MainWindow::editRow()
 
     if (isalpha(Qstr[lastRow].toStdString()[0]) && Qstr[lastRow].replace(" ", "").indexOf("=") == 1)
     {
+        var = true;
         Qstr[currentRow] = Qstr[lastRow][0] + Qstr[currentRow];
     }
 
@@ -193,7 +197,22 @@ void MainWindow::editRow()
         return;
     }
 
-    this->refillEntry(Qstr, currentRow, ui->entry->textCursor().columnNumber() + Qstr[lastRow].split("=")[1].size());
+    this->refillEntry(Qstr, currentRow + 1, ui->entry->textCursor().columnNumber() + Qstr[lastRow].split("=")[1].size(), true);
+
+    QTextCursor tmpCursor = ui->entry->textCursor();
+    int cursorPos = tmpCursor.position();
+
+    if (var)
+    {
+        tmpCursor.setPosition(cursorPos + Qstr[lastRow].split("=")[0].replace(" ", "").size());
+    }
+
+    else
+    {
+        tmpCursor.setPosition(cursorPos + Qstr[lastRow].split("=")[1].replace(" ", "").size());
+    }
+
+    ui->entry->setTextCursor(tmpCursor);
 }
 
 void MainWindow::setFontSize(QTextCursor& tmpCursor)
@@ -204,6 +223,8 @@ void MainWindow::setFontSize(QTextCursor& tmpCursor)
 
 void MainWindow::refillEntry(QStringList Qstr, int currentRow, int column, bool enter)
 {
+    QTextCursor tmpCursor = ui->entry->textCursor();
+    int cursorPos = tmpCursor.position();
     ui->entry->clear();
 
     for (int i = 0; i < Qstr.length(); i++)
@@ -221,10 +242,8 @@ void MainWindow::refillEntry(QStringList Qstr, int currentRow, int column, bool 
         }
     }
 
-    QTextCursor tmpCursor = ui->entry->textCursor();
-    tmpCursor.movePosition(QTextCursor::Start, QTextCursor::MoveAnchor);
-    tmpCursor.movePosition(QTextCursor::Down, QTextCursor::MoveAnchor, currentRow);
-    tmpCursor.movePosition(QTextCursor::Right, QTextCursor::MoveAnchor, column);
+    tmpCursor.setPosition(cursorPos);
+
     this->setFontSize(tmpCursor);
     QFont font = ui->entry->font();
     ui->entry->setTextCursor(tmpCursor);
@@ -337,7 +356,13 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event)
 
         catch (const std::exception& ex)
         {
-            MessageBox(nullptr, TEXT("ERROR"), TEXT("ERROR"), MB_OK);
+            if (count == -1)
+            {
+                std::string what = ex.what();
+                MessageBoxA(nullptr, what.c_str(), "ERROR", MB_OK);
+            }
+
+            count++;
         }
     }
 
