@@ -28,6 +28,65 @@ int Parser::getBaseNum(double& num)
     return count;
 }
 
+double Parser::getFloatPart()
+{
+    double floatPart = 0;
+    this->nextToken();
+    int count = this->getBaseNum(floatPart);
+    floatPart /= pow(10, count);
+
+    if (this->next == '.')
+    {
+        throw WrongExpr();
+    }
+
+    return floatPart;
+}
+
+double Parser::getExpNum(double num)
+{
+    this->exp = true;
+    double coof = 0;
+    bool negative = false;
+
+    this->nextToken();
+
+    if (this->next == '-')
+    {
+        negative = true;
+        this->nextToken();
+    }
+
+    else if (this->next == '+')
+    {
+        this->nextToken();
+    }
+
+    else if (!std::isdigit(this->next))
+    {
+        return num;
+    }
+
+    this->getBaseNum(coof);
+
+    //if (coof == oldCoof)
+    //{
+    //    if (this->next == 'e')
+    //    {
+    //        this->nextToken();
+    //    }
+
+    //    return num;
+    //}
+
+    if (negative)
+    {
+        coof = -coof;
+    }
+
+    return num * pow(10, coof);
+}
+
 double Parser::getNum()
 {
     double num = (int)this->next - 48;
@@ -43,61 +102,19 @@ double Parser::getNum()
 
     if (this->next == 'e')
     {
-        this->exp = true;
-        double coof = 0;
-        bool negative = false;
-
-        this->nextToken();
-
-        if (this->next == '-')
-        {
-            negative = true;
-            this->nextToken();
-        }
-
-        else if (this->next == '+')
-        {
-            this->nextToken();
-        }
-
-        else if (!std::isdigit(this->next))
-        {
-            return num;
-        }
-
-        this->getBaseNum(coof);
-
-        //if (coof == oldCoof)
-        //{
-        //    if (this->next == 'e')
-        //    {
-        //        this->nextToken();
-        //    }
-
-        //    return num;
-        //}
-
-        if (negative)
-        {
-            coof = -coof;
-        }
-
-        return num * pow(10, coof);
+        return this->getExpNum(num);
     }
 
     else if (this->next == '.')
     {
-        double floatPart = 0;
-        this->nextToken();
-        int count = this->getBaseNum(floatPart);
-        floatPart /= pow(10, count);
+        num += this->getFloatPart();
 
-        if (this->next == '.')
+        if (this->next == 'e')
         {
-            throw WrongExpr();
+            return this->getExpNum(num);
         }
 
-        return num + floatPart;
+        return num;
     }
 
     return num;

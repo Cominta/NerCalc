@@ -115,15 +115,20 @@ QString MainWindow::equal(QString string)
     {
         double resultDouble = this->mathParser->parse(string.toStdString());
         char format = 'f';
+        int precision = this->config->precision;
 
-//        if (this->mathParser->getExp())
-//        {
-//            format = 'e';
-//        }
+        if (this->mathParser->getExp())
+        {
+            format = 'e';
+        }
 
-        result = QString::number(resultDouble, format, this->config->precision);
-        result.remove(QRegularExpression("0+$"));
-        result.remove(QRegularExpression("\\.$"));
+        result = QString::number(resultDouble, format, precision);
+
+        if (!this->mathParser->getExp())
+        {
+            result.remove(QRegularExpression("0+$"));
+            result.remove(QRegularExpression("\\.$"));
+        }
 
         qDebug() << result;
 

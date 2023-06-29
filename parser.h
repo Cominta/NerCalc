@@ -49,6 +49,8 @@ private:
     char next;
 
     int getBaseNum(double& num);
+    double getFloatPart();
+    double getExpNum(double num);
     double getNum();
     
     ASTItems::Token* expr(); // E
