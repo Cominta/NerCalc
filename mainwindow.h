@@ -8,6 +8,7 @@
 #include <QMenuBar>
 #include <cmath>
 #include <QInputDialog>
+#include <QRegularExpression>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -16,6 +17,7 @@ QT_END_NAMESPACE
 struct ExprConfig
 {
     bool spacingAfterEqual;
+    int precision;
 };
 
 class MainWindow : public QMainWindow
@@ -35,7 +37,7 @@ class MainWindow : public QMainWindow
         void enter(bool enter, bool wrongEnter = false);
         QString equal(QString string);
         void var(QString string);
-        void deleteEqual(bool equal, int oldSizeSet = -1);
+//        void deleteEqual(bool equal, int oldSizeSet = -1);
         void setFontSize(QTextCursor& tmpCursor);
 
         void on_actionFont_size_triggered();
@@ -45,6 +47,8 @@ class MainWindow : public QMainWindow
         void on_actionTrue_triggered();
 
         void on_actionFalse_triggered();
+
+        void on_actionSet_precision_triggered();
 
 public:
         MainWindow(QWidget *parent = nullptr);

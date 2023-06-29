@@ -64,6 +64,7 @@
      <addaction name="actionFalse"/>
     </widget>
     <addaction name="menuSpacing_after"/>
+    <addaction name="actionSet_precision"/>
    </widget>
    <addaction name="menuSettings"/>
    <addaction name="menuExpressions_config"/>
@@ -83,10 +84,7 @@
     <bool>true</bool>
    </property>
    <property name="checked">
-    <bool>true</bool>
-   </property>
-   <property name="icon">
-    <iconset theme="call-start"/>
+    <bool>false</bool>
    </property>
    <property name="text">
     <string>True</string>
@@ -96,8 +94,16 @@
    <property name="checkable">
     <bool>true</bool>
    </property>
+   <property name="checked">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>False</string>
+   </property>
+  </action>
+  <action name="actionSet_precision">
+   <property name="text">
+    <string>Set precision</string>
    </property>
   </action>
  </widget>

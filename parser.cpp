@@ -43,6 +43,7 @@ double Parser::getNum()
 
     if (this->next == 'e')
     {
+        this->exp = true;
         double coof = 0;
         bool negative = false;
 
@@ -63,8 +64,6 @@ double Parser::getNum()
         {
             return num;
         }
-
-        double oldCoof = coof;
 
         this->getBaseNum(coof);
 
@@ -259,6 +258,7 @@ double Parser::parse(std::string str)
 {
     if (str.size() > 0)
     {
+        this->exp = false;
         this->currentStr = str;
         this->currentIndex = 0;
         this->nextToken();

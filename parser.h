@@ -42,6 +42,7 @@ class Parser
 private:
     ASTItems::Token* tree = nullptr;
     std::map<char, double> variables;
+    bool exp = false;
 
     std::string currentStr;
     int currentIndex;
@@ -65,4 +66,5 @@ public:
 
     void setVar(char symbol, double value) { this->variables[symbol] = value; }
     double getValVar(char symbol) { return this->variables[symbol]; }
+    bool getExp() const { return this->exp; }
 };

@@ -10,11 +10,16 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     qApp->installEventFilter(this);
 
+    this->ui->actionTrue->setCheckable(true);
+    this->ui->actionFalse->setCheckable(true);
+    this->ui->actionTrue->setChecked(true);
+
     this->fontSize = ui->entry->font().pointSize();
     this->mathParser = new Parser();
 
     this->config = new ExprConfig();
     this->config->spacingAfterEqual = true;
+    this->config->precision = 4;
 }
 
 MainWindow::~MainWindow()
@@ -103,21 +108,32 @@ QString MainWindow::equal(QString string)
 //    }
 
     // Qstr[currentRow].toStdString()
-    double result;
+    QString result;
     bool notError = true;
 
     try
     {
-        result = this->mathParser->parse(string.toStdString());
+        double resultDouble = this->mathParser->parse(string.toStdString());
+        char format = 'f';
+
+//        if (this->mathParser->getExp())
+//        {
+//            format = 'e';
+//        }
+
+        result = QString::number(resultDouble, format, this->config->precision);
+        result.remove(QRegularExpression("0+$"));
+        result.remove(QRegularExpression("\\.$"));
+
         qDebug() << result;
 
-        if (std::isinf(result))
+        if (std::isinf(result.toDouble()))
         {
             MessageBox(nullptr, TEXT("Number is inf"), TEXT("ERROR"), MB_OK);
             notError = false;
         }
 
-        else if (std::isnan(result))
+        else if (std::isnan(result.toDouble()))
         {
             MessageBox(nullptr, TEXT("Not a number"), TEXT("ERROR"), MB_OK);
             notError = false;
@@ -151,7 +167,7 @@ QString MainWindow::equal(QString string)
 //        }
 
         QString equalStr;
-        equalStr.setNum(std::round(result * 10000) / 10000/*, 'g', 100*/);
+        equalStr += result;
 
         if (this->config->spacingAfterEqual)
         {
@@ -259,36 +275,36 @@ void MainWindow::var(QString string)
     this->mathParser->setVar(name, this->mathParser->parse(value));
 }
 
-void MainWindow::deleteEqual(bool equal, int oldSizeSet)
-{
-    static int oldSize = 0;
-    static int oldRow = 0;
+//void MainWindow::deleteEqual(bool equal, int oldSizeSet)
+//{
+//    static int oldSize = 0;
+//    static int oldRow = 0;
 
-    if (oldSizeSet != -1)
-    {
-        oldSize = oldSizeSet;
-        return;
-    }
+//    if (oldSizeSet != -1)
+//    {
+//        oldSize = oldSizeSet;
+//        return;
+//    }
 
-    int currentRow = ui->entry->textCursor().blockNumber();
-    QStringList Qstr =  ui->entry->toPlainText().split("\n");
-    int currentSize = Qstr[currentRow].size();
+//    int currentRow = ui->entry->textCursor().blockNumber();
+//    QStringList Qstr =  ui->entry->toPlainText().split("\n");
+//    int currentSize = Qstr[currentRow].size();
 
-    if (currentRow != oldRow)
-    {
-        oldSize = currentSize;
-        oldRow = currentRow;
-    }
+//    if (currentRow != oldRow)
+//    {
+//        oldSize = currentSize;
+//        oldRow = currentRow;
+//    }
 
-    if (Qstr[currentRow].size() != 0 && Qstr[currentRow][0] != '#' && Qstr[currentRow].contains("=") && currentSize != oldSize && !equal)
-    {
-        Qstr[currentRow] = Qstr[currentRow].split("=")[0];
-        this->refillEntry(Qstr, currentRow, ui->entry->textCursor().columnNumber());
+//    if (Qstr[currentRow].size() != 0 && Qstr[currentRow][0] != '#' && Qstr[currentRow].contains("=") && currentSize != oldSize && !equal)
+//    {
+//        Qstr[currentRow] = Qstr[currentRow].split("=")[0];
+//        this->refillEntry(Qstr, currentRow, ui->entry->textCursor().columnNumber());
 
-        oldSize = currentSize;
-        oldRow = currentRow;
-    }
-}
+//        oldSize = currentSize;
+//        oldRow = currentRow;
+//    }
+//}
 
 bool MainWindow::eventFilter(QObject* obj, QEvent* event)
 {
@@ -341,7 +357,7 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event)
                 !isalpha(ui->entry->toPlainText().split("\n")[ui->entry->textCursor().blockNumber()].toStdString()[0]) &&
                 !(ui->entry->toPlainText().split("\n")[ui->entry->textCursor().blockNumber()].toStdString()[1] == '='))
             {
-                this->deleteEqual(equal);
+//                this->deleteEqual(equal);
             }
 
             count++;
@@ -351,7 +367,7 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event)
                 count = -1;
             }
 
-            this->deleteEqual(false, ui->entry->toPlainText().split("\n")[ui->entry->textCursor().blockNumber()].size());
+//            this->deleteEqual(false, ui->entry->toPlainText().split("\n")[ui->entry->textCursor().blockNumber()].size());
         }
 
         catch (const std::exception& ex)
@@ -389,6 +405,7 @@ void MainWindow::on_actionTrue_triggered()
 {
     if (this->config->spacingAfterEqual)
     {
+        this->ui->actionTrue->setChecked(true);
         return;
     }
 
@@ -404,6 +421,7 @@ void MainWindow::on_actionFalse_triggered()
 {
     if (!this->config->spacingAfterEqual)
     {
+        this->ui->actionFalse->setChecked(true);
         return;
     }
 
@@ -412,4 +430,9 @@ void MainWindow::on_actionFalse_triggered()
         this->config->spacingAfterEqual = false;
         this->ui->actionTrue->setChecked(false);
     }
+}
+
+void MainWindow::on_actionSet_precision_triggered()
+{
+    this->config->precision = QInputDialog::getInt(this, "Precision", "Enter precision:", this->config->precision, 1, 20);
 }
