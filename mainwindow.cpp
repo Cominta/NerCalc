@@ -130,7 +130,27 @@ QString MainWindow::equal(QString string)
             result.remove(QRegularExpression("\\.$"));
         }
 
-        qDebug() << result;
+        else
+        {
+            // delete zeros
+            QString toEditLeft = result.split('e')[0];
+            int i = toEditLeft.size() - 1;
+
+            qDebug() << (toEditLeft[i] == 0) << " " << (toEditLeft[i]);
+
+            while (i >= 0 && toEditLeft[i] == '0')
+            {
+                toEditLeft.remove(i, 1);
+                i--;
+            }
+
+            if (toEditLeft[i] == '.')
+            {
+               toEditLeft.remove(i, 1);
+            }
+
+            result = toEditLeft + 'e' + result.split('e')[1];
+        }
 
         if (std::isinf(result.toDouble()))
         {
@@ -280,36 +300,45 @@ void MainWindow::var(QString string)
     this->mathParser->setVar(name, this->mathParser->parse(value));
 }
 
-//void MainWindow::deleteEqual(bool equal, int oldSizeSet)
-//{
-//    static int oldSize = 0;
-//    static int oldRow = 0;
+void MainWindow::deleteEqual(bool equal, int oldSizeSet)
+{
+    static int oldSize = 0;
+    static int oldRow = 0;
 
-//    if (oldSizeSet != -1)
-//    {
-//        oldSize = oldSizeSet;
-//        return;
-//    }
+    if (oldSizeSet != -1)
+    {
+        oldSize = oldSizeSet;
+        return;
+    }
 
-//    int currentRow = ui->entry->textCursor().blockNumber();
-//    QStringList Qstr =  ui->entry->toPlainText().split("\n");
-//    int currentSize = Qstr[currentRow].size();
+    int currentRow = ui->entry->textCursor().blockNumber();
+    QStringList Qstr =  ui->entry->toPlainText().split("\n");
+    int currentSize = Qstr[currentRow].size();
 
-//    if (currentRow != oldRow)
-//    {
-//        oldSize = currentSize;
-//        oldRow = currentRow;
-//    }
+    if (currentRow != oldRow)
+    {
+        oldSize = currentSize;
+        oldRow = currentRow;
+    }
 
-//    if (Qstr[currentRow].size() != 0 && Qstr[currentRow][0] != '#' && Qstr[currentRow].contains("=") && currentSize != oldSize && !equal)
-//    {
-//        Qstr[currentRow] = Qstr[currentRow].split("=")[0];
-//        this->refillEntry(Qstr, currentRow, ui->entry->textCursor().columnNumber());
+    if (Qstr[currentRow].size() != 0 && Qstr[currentRow][0] != '#' && Qstr[currentRow].contains("=") && currentSize != oldSize && !equal)
+    {
+        Qstr[currentRow] = Qstr[currentRow].split("=")[0];
 
-//        oldSize = currentSize;
-//        oldRow = currentRow;
-//    }
-//}
+        if (ui->entry->textCursor().columnNumber() > Qstr[currentRow].indexOf('='))
+        {
+            this->refillEntry(Qstr, currentRow, ui->entry->textCursor().columnNumber() - Qstr[currentRow].split("=")[0].size());
+        }
+
+        else
+        {
+            this->refillEntry(Qstr, currentRow, ui->entry->textCursor().columnNumber());
+        }
+
+        oldSize = currentSize;
+        oldRow = currentRow;
+    }
+}
 
 bool MainWindow::eventFilter(QObject* obj, QEvent* event)
 {
@@ -362,7 +391,7 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event)
                 !isalpha(ui->entry->toPlainText().split("\n")[ui->entry->textCursor().blockNumber()].toStdString()[0]) &&
                 !(ui->entry->toPlainText().split("\n")[ui->entry->textCursor().blockNumber()].toStdString()[1] == '='))
             {
-//                this->deleteEqual(equal);
+                this->deleteEqual(equal);
             }
 
             count++;
@@ -372,7 +401,7 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event)
                 count = -1;
             }
 
-//            this->deleteEqual(false, ui->entry->toPlainText().split("\n")[ui->entry->textCursor().blockNumber()].size());
+            this->deleteEqual(false, ui->entry->toPlainText().split("\n")[ui->entry->textCursor().blockNumber()].size());
         }
 
         catch (const std::exception& ex)

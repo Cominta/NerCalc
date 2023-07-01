@@ -22,6 +22,8 @@ set(PROJECT_SOURCES
         parser.h
         parser.cpp
         AST.h
+        saver.cpp
+        saver.h
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
