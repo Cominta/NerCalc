@@ -10,23 +10,112 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     qApp->installEventFilter(this);
 
-    this->ui->actionTrue->setCheckable(true);
-    this->ui->actionFalse->setCheckable(true);
-    this->ui->actionTrue->setChecked(true);
+    std::string titleSettings = "settings.bin";
+    this->saverSettings = new SaverSettings();
+    this->config = new Config();
+    std::ifstream file(titleSettings);
 
-    this->fontSize = ui->entry->font().pointSize();
+    if (file.good())
+    {
+        file.close();
+        this->saverSettings->load("settings.bin");
+
+        Config result = this->saverSettings->getConfig();
+        this->config->precision = result.precision;
+        this->config->spacingAfterEqual = result.precision;
+        this->config->letterSpacing = result.letterSpacing;
+        this->config->fontSize = result.fontSize;
+    }
+
+    else
+    {
+        file.close();
+        this->config->fontSize = 9;
+        this->config->precision = 4;
+        this->config->letterSpacing = 0;
+        this->config->spacingAfterEqual = false;
+
+        QTextCursor tmpCursor = ui->entry->textCursor();
+        this->setFontSize(tmpCursor);
+        ui->entry->setTextCursor(tmpCursor);
+    }
+
+    if (this->config->spacingAfterEqual)
+    {
+        this->ui->actionTrue->setChecked(true);
+    }
+
+    else
+    {
+        this->ui->actionFalse->setChecked(true);
+    }
+
+    QFont font;
+    font.setPointSize(this->config->fontSize);
+    this->ui->entry->setFont(font);
+
+    this->saverMath = new SaverMath();
+
+    std::string titleExpr = "lastExpressions.txt";
+    file.open(titleExpr);
+
+    if (file.good())
+    {
+        file.close();
+        this->saverMath->load(titleExpr);
+        this->refillEntry(this->convertToQtList(this->saverMath->getBuff()), 0, 0);
+    }
+
+    else
+    {
+        this->refillEntry(QStringList(), 0, 0);
+    }
+
+    file.close();
+
     this->mathParser = new Parser();
-
-    this->config = new ExprConfig();
-    this->config->spacingAfterEqual = true;
-    this->config->precision = 4;
 }
 
 MainWindow::~MainWindow()
 {
+    this->saverMath->save(this->convertToVector(this->ui->entry->toPlainText().split("\n")), "lastExpressions.txt");
+    delete this->saverMath;
+
+    this->saverSettings->setConfig(*this->config);
+    this->saverSettings->save({}, "settings.bin");
+    delete this->saverSettings;
+
     delete ui;
     delete this->mathParser;
-    delete this->config;
+
+    if (this->config != nullptr)
+    {
+        delete this->config;
+    }
+}
+
+std::vector<std::string> MainWindow::convertToVector(QStringList list)
+{
+    std::vector<std::string> buff;
+
+    for (auto str : list)
+    {
+        buff.push_back(str.toStdString());
+    }
+
+    return buff;
+}
+
+QStringList MainWindow::convertToQtList(std::vector<std::string> buff)
+{
+    QStringList list;
+
+    for (auto str : buff)
+    {
+        list.append(QString::fromStdString(str));
+    }
+
+    return list;
 }
 
 void MainWindow::enter(bool enter, bool wrongEnter)
@@ -259,7 +348,7 @@ void MainWindow::editRow()
 void MainWindow::setFontSize(QTextCursor& tmpCursor)
 {
     ui->entry->selectAll();
-    ui->entry->setFontPointSize(this->fontSize);
+    ui->entry->setFontPointSize(this->config->fontSize);
 }
 
 void MainWindow::refillEntry(QStringList Qstr, int currentRow, int column, bool enter)
@@ -421,7 +510,7 @@ bool MainWindow::eventFilter(QObject* obj, QEvent* event)
 
 void MainWindow::on_actionFont_size_triggered()
 {
-    this->fontSize = QInputDialog::getInt(this, "Font size", "Enter font size:", this->fontSize, 0, 100);
+    this->config->fontSize = QInputDialog::getInt(this, "Font size", "Enter font size:", this->config->fontSize, 0, 100);
     QTextCursor tmpCursor = ui->entry->textCursor();
     this->setFontSize(tmpCursor);
     ui->entry->setTextCursor(tmpCursor);
@@ -430,8 +519,8 @@ void MainWindow::on_actionFont_size_triggered()
 
 void MainWindow::on_actionInterval_triggered()
 {
-    int spacing = QInputDialog::getInt(this, "Letter spacing", "Enter letter spacing:", 0, 0, 10);
-    ui->entry->setStyleSheet(("QTextEdit {letter-spacing: " + std::to_string(spacing) + "px;}").data());
+    this->config->letterSpacing = QInputDialog::getInt(this, "Letter spacing", "Enter letter spacing:", this->config->letterSpacing, 0, 10);
+    ui->entry->setStyleSheet(("QTextEdit {letter-spacing: " + std::to_string(this->config->letterSpacing) + "px;}").data());
 }
 
 
