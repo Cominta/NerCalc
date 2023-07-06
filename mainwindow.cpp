@@ -563,13 +563,20 @@ void MainWindow::on_actionSet_precision_triggered()
 void MainWindow::on_actionSave_as_triggered()
 {
     QString name = QFileDialog::getSaveFileName(this, "Save file");
-    this->saverMath->save(this->convertToVector(this->ui->entry->toPlainText().split("\n")), name.toStdString());
+
+    if (name != "")
+    {
+        this->saverMath->save(this->convertToVector(this->ui->entry->toPlainText().split("\n")), name.toStdString());
+    }
 }
 
 void MainWindow::on_actionLoad_triggered()
 {
     QString name = QFileDialog::getOpenFileName(this, "Save file");
-    this->saverMath->load(name.toStdString());
-    this->refillEntry(this->convertToQtList(this->saverMath->getBuff()), 0, 0);
-}
 
+    if (name != "")
+    {
+        this->saverMath->load(name.toStdString());
+        this->refillEntry(this->convertToQtList(this->saverMath->getBuff()), 0, 0);
+    }
+}
