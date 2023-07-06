@@ -11,6 +11,7 @@
 #include <cmath>
 #include <QInputDialog>
 #include <QRegularExpression>
+#include <QFileDialog>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -45,6 +46,10 @@ private slots:
     void on_actionTrue_triggered();
     void on_actionFalse_triggered();
     void on_actionSet_precision_triggered();
+
+    void on_actionSave_as_triggered();
+
+    void on_actionLoad_triggered();
 
 public:
     MainWindow(QWidget *parent = nullptr);
